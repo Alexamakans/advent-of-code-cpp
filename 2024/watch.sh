@@ -18,5 +18,5 @@ fi
 
 # Run once before watching to make sure the code file has been created.
 $SCRIPT_ROOT/run.sh $DAY $2
-ls $SCRIPT_ROOT/run.sh $SCRIPT_ROOT/src/${DAY}.cpp |
+ls $SCRIPT_ROOT/run.sh $SCRIPT_ROOT/src/${DAY}.cpp $SCRIPT_ROOT/src/util.cpp |
     entr $SCRIPT_ROOT/run.sh $DAY $2

@@ -1,34 +1,56 @@
+#include <format>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <expected>
 
-int part_one(const std::string& input) {
+#include "util.cpp"
+
+using std::string;
+using std::unexpected, std::expected;
+using std::cout, std::println;
+
+auto part_one(const string &input) -> expected<int, string> {
+  if (false) {
+    return unexpected("false is true?");
+  }
   return 0;
 }
 
-int part_two(const std::string& input) {
+auto part_two(const string &input) -> expected<int, string> {
+  if (false) {
+    return unexpected("false is true?");
+  }
   return 0;
 }
 
 int main() {
   std::ostringstream buffer;
   buffer << std::cin.rdbuf();
-  std::string input = buffer.str();
+  string input = buffer.str();
 
-  std::cout << " --- PART 1 LOGS ---" << std::endl;
-  int part_one_result = part_one(input);
-  std::cout << std::endl << std::endl;
-  
-  std::cout << " --- PART 2 LOGS ---" << std::endl;
-  int part_two_result = part_two(input);
-  std::cout << std::endl << std::endl;
+  println(cout, " --- PART 1 LOGS ---");
+  int part_one_result = part_one(input).or_else([](string error) {
+    println(cout, "\033[1;31m{}\033[0m", error);
+    return expected<int, string>(0);
+  }).value();
+  println(cout);
+  println(cout);
 
-  std::cout << "-----------------------------------------" << std::endl;
-  std::cout << "Day 1" << std::endl;
-  std::cout << "\tPart 1" << std::endl;
-  std::cout << "\t\tAnswer: " << part_one_result << std::endl;
-  std::cout << "\tPart 2" << std::endl;
-  std::cout << "\t\tAnswer: " << part_two(input) << std::endl;
-  std::cout << "-----------------------------------------" << std::endl;
+  println(cout, " --- PART 2 LOGS ---");
+  int part_two_result = part_two(input).or_else([](string error) {
+    println(cout, "\033[1;31m{}\033[0m", error);
+    return expected<int, string>(0);
+  }).value();
+  println(cout);
+  println(cout);
+
+  println(cout, "-----------------------------------------");
+  println(cout, "Day 1");
+  println(cout, "\tPart 1");
+  println(cout, "\t\tAnswer: {}", part_one_result);
+  println(cout, "\tPart 2");
+  println(cout, "\t\tAnswer: {}", part_two_result);
+  println(cout, "-----------------------------------------");
   return 0;
 }

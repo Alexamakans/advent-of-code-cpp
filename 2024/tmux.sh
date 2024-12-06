@@ -21,8 +21,10 @@ if [ $? != 0 ]; then
   tmux split-window -v -t "$SESSION_NAME:0.1"
   tmux send-keys -t "$SESSION_NAME:0.2" "$CMD_WATCH" C-m
 
+
   tmux select-pane -t "$SESSION_NAME:0.0"
   tmux send-keys -t "$SESSION_NAME:0.0" "$CMD_NVIM" C-m
+  tmux resize-pane -t "$SESSION_NAME:0.0" -R 20
 fi
 
 tmux attach -t "$SESSION_NAME"
