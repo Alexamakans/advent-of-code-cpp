@@ -12,11 +12,7 @@ if [ $# -eq 0 ] || [ $# -gt 2 ]; then
   exit 1
 fi
 
-if [ $# -eq 2 ] && [ $2 -eq 'test' ]; then
-  DAY=$1
-fi
-
 # Run once before watching to make sure the code file has been created.
 $SCRIPT_ROOT/run.sh $DAY $2
-ls $SCRIPT_ROOT/run.sh $SCRIPT_ROOT/src/${DAY}.cpp $SCRIPT_ROOT/src/util.cpp |
+ls $SCRIPT_ROOT/run.sh $SCRIPT_ROOT/src/${DAY}.cpp $SCRIPT_ROOT/src/util.hpp |
     entr $SCRIPT_ROOT/run.sh $DAY $2

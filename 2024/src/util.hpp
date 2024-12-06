@@ -1,0 +1,42 @@
+#ifndef UTIL_HPP
+#define UTIL_HPP
+#include <charconv>
+#include <optional>
+#include <ranges>
+#include <vector>
+
+namespace parse {
+constexpr auto to_string(const std::string_view &sv)
+    -> std::optional<std::string> {
+  return std::string(sv);
+}
+
+constexpr auto to_int(const std::string_view &sv) -> std::optional<int> {
+  int value;
+  auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+  if (err == std::errc{}) {
+    return value;
+  }
+  return std::nullopt;
+}
+} // namespace parse
+
+template <typename Parser>
+auto split(const std::string &s, const char delimiter,
+           Parser parser = parse::to_string)
+    -> std::vector<
+        typename std::invoke_result_t<Parser, std::string_view>::value_type> {
+  using T = typename std::invoke_result_t<Parser, std::string_view>::value_type;
+  std::vector<T> result;
+  for (const auto &token : std::views::split(s, delimiter) |
+                               std::views::transform([&](auto &&token) {
+                                 return std::string_view(token.begin(),
+                                                         token.end());
+                               })) {
+    if (auto parsed = parser(token); parsed) {
+      result.push_back(*parsed);
+    }
+  }
+  return result;
+}
+#endif // UTIL_HPP

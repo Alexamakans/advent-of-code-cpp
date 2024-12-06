@@ -1,12 +1,8 @@
-#include <algorithm>
-#include <cstdlib>
 #include <expected>
-#include <format>
 #include <iostream>
 #include <sstream>
-#include <string>
 
-#include "util.cpp"
+#include "util.hpp"
 
 using std::cout, std::println;
 using std::string;
@@ -19,13 +15,12 @@ auto part_one(const string &input) -> expected<int, string> {
    * Output the sum of the difference of each pair.
    */
 
-  std::istringstream lines(input);
-  string line;
-
   std::vector<int> left, right;
 
+  std::istringstream lines(input);
+  string line;
   while (std::getline(lines, line)) {
-    auto parts = split_to_ints(line, ' ');
+    std::vector<int> parts = split(line, ' ', parse::to_int);
     if (parts.size() != 2) {
       return unexpected(
           std::format("expected 2 parts per line, got {}", parts.size()));
@@ -55,14 +50,12 @@ auto part_two(const string &input) -> expected<int, string> {
    *
    * sum for all i: left(i) * count(right, left(i))
    */
+  std::vector<int> left, right;
 
   std::istringstream lines(input);
   string line;
-
-  std::vector<int> left, right;
-
   while (std::getline(lines, line)) {
-    auto parts = split_to_ints(line, ' ');
+    auto parts = split(line, ' ', parse::to_int);
     if (parts.size() != 2) {
       return unexpected(
           std::format("expected 2 parts per line, got {}", parts.size()));
