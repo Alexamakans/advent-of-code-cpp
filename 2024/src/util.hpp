@@ -3,6 +3,7 @@
 #include <charconv>
 #include <optional>
 #include <ranges>
+#include <string_view>
 #include <vector>
 
 namespace parse {
@@ -13,6 +14,26 @@ constexpr auto to_string(const std::string_view &sv)
 
 constexpr auto to_int(const std::string_view &sv) -> std::optional<int> {
   int value;
+  auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+  if (err == std::errc{}) {
+    return value;
+  }
+  return std::nullopt;
+}
+
+constexpr auto to_long_long(const std::string_view &sv)
+    -> std::optional<long long> {
+  long long value;
+  auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+  if (err == std::errc{}) {
+    return value;
+  }
+  return std::nullopt;
+}
+
+constexpr auto to_unsigned_long_long(const std::string_view &sv)
+    -> std::optional<unsigned long long> {
+  unsigned long long value;
   auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
   if (err == std::errc{}) {
     return value;
