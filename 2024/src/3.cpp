@@ -54,14 +54,8 @@ auto part_two(const string &input) -> expected<AnswerType, string> {
 
       auto s = match.str();
       if (s == "don't()") {
-        if (active) {
-          println(cout, "setting to active = false");
-        }
         active = false;
       } else if (s == "do()") {
-        if (!active) {
-          println(cout, "setting to active = true");
-        }
         active = true;
       } else if (active) {
         auto parts = split(s, ',', parse::to_int);
