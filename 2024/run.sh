@@ -38,8 +38,10 @@ using std::cout, std::println;
 using std::string;
 using std::unexpected, std::expected;
 
-auto part_one(const string &input) -> expected<int, string> {
-  int result = 0;
+typedef int AnswerType;
+
+auto part_one(const string &input) -> expected<AnswerType, string> {
+  AnswerType result = 0;
 
   std::istringstream lines(input);
   string line;
@@ -53,8 +55,8 @@ auto part_one(const string &input) -> expected<int, string> {
   return result;
 }
 
-auto part_two(const string &input) -> expected<int, string> {
-  int result = 0;
+auto part_two(const string &input) -> expected<AnswerType, string> {
+  AnswerType result = 0;
 
   std::istringstream lines(input);
   string line;
@@ -74,20 +76,20 @@ int main() {
   string input = buffer.str();
 
   println(cout, " --- PART 1 LOGS ---");
-  int part_one_result = part_one(input)
+  AnswerType part_one_result = part_one(input)
                             .or_else([](string error) {
                               println(cout, "\033[1;31m{}\033[0m", error);
-                              return expected<int, const char *>(0);
+                              return expected<AnswerType, const char *>(0);
                             })
                             .value();
   println(cout);
   println(cout);
 
   println(cout, " --- PART 2 LOGS ---");
-  int part_two_result = part_two(input)
+  AnswerType part_two_result = part_two(input)
                             .or_else([](string error) {
                               println(cout, "\033[1;31m{}\033[0m", error);
-                              return expected<int, const char *>(0);
+                              return expected<AnswerType, const char *>(0);
                             })
                             .value();
   println(cout);
