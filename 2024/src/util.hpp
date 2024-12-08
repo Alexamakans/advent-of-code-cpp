@@ -1,8 +1,10 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 #include <charconv>
+#include <format>
 #include <optional>
 #include <ranges>
+#include <sstream>
 #include <string_view>
 #include <vector>
 
@@ -59,5 +61,16 @@ auto split(const std::string &s, const char delimiter,
     }
   }
   return result;
+}
+
+std::string join(const std::vector<int> &vec, std::string delimiter) {
+  std::ostringstream s("");
+
+  auto it = vec.cbegin();
+  for (; it < vec.cend() - 1; ++it) {
+    print(s, "{}{}", *it, delimiter);
+  }
+  print(s, "{}", *it);
+  return s.str();
 }
 #endif // UTIL_HPP
