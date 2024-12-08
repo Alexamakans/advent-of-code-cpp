@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <expected>
+#include <format>
 #include <iostream>
+#include <optional>
 #include <sstream>
 
 #include "util.hpp"
@@ -12,17 +14,28 @@ using std::unexpected, std::expected;
 typedef int AnswerType;
 
 class Rule {
-  int a, b;
-
 public:
-  Rule(int a, int b) : a(a), b(b) {}
+  int left, right;
+
+  Rule(int left, int right) : left(left), right(right) {}
   bool allows(const std::vector<int> &updates) const {
-    auto a_index =
-        std::find(updates.cbegin(), updates.cend(), a) - updates.cbegin();
-    auto b_index =
-        std::find(updates.cbegin(), updates.cend(), b) - updates.cbegin();
+    auto begin = updates.cbegin();
+    auto end = updates.cend();
+    auto a_index = std::find(begin, end, left) - begin;
+    auto b_index = std::find(begin, end, right) - begin;
     return a_index == updates.size() || b_index == updates.size() ||
            a_index < b_index;
+  }
+
+  string to_string() const { return std::format("{}|{}", left, right); }
+};
+
+template <> struct std::formatter<Rule> {
+  constexpr auto parse(std::format_parse_context &context) {
+    return context.begin();
+  }
+  auto format(const Rule &sVal, std::format_context &context) const {
+    return std::format_to(context.out(), "{}", sVal.to_string());
   }
 };
 
@@ -49,11 +62,11 @@ auto part_one(const string &input) -> expected<AnswerType, string> {
     std::vector<int> updates = split(line, ',', parse::to_int);
     for (const auto &rule : rules) {
       if (!rule.allows(updates)) {
-        goto nextline;
+        goto nextline_p1;
       }
     }
     result += updates.at(updates.size() / 2);
-  nextline:
+  nextline_p1:
   }
 
   return result;
@@ -63,14 +76,53 @@ auto part_two(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
 
   std::istringstream lines(input);
+  auto rules = parse_rules(lines);
   string line;
   while (std::getline(lines, line)) {
-    // Do stuff
+    std::vector<int> updates = split(line, ',', parse::to_int);
+    bool is_sorted = true;
+    for (const auto &rule : rules) {
+      if (!rule.allows(updates)) {
+        is_sorted = false;
+        break;
+      }
+    }
+    if (is_sorted) {
+      continue;
+    }
+
+    auto get_rule = [&rules](int a, int b) -> std::optional<Rule> {
+      for (const auto &rule : rules) {
+        if ((rule.left == a && rule.right == b) ||
+            (rule.left == b && rule.right == a)) {
+          return rule;
+        }
+      }
+      return std::nullopt;
+    };
+
+    while (true) {
+      bool swapped = false;
+      for (auto a = updates.begin(); a != updates.end() - 1; ++a) {
+        for (auto b = a + 1; b != updates.end(); ++b) {
+          const auto &rule = get_rule(*a, *b);
+          if (rule.has_value()) {
+            if (rule.value().right == *a) {
+              swapped = true;
+              std::iter_swap(a, b);
+            }
+          }
+        }
+      }
+      if (!swapped) {
+        break;
+      }
+    }
+
+    int middle_value = updates.at(updates.size() / 2);
+    result += middle_value;
   }
 
-  if (false) {
-    return unexpected("false is true?!");
-  }
   return result;
 }
 
