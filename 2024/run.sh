@@ -79,7 +79,7 @@ int main() {
   AnswerType part_one_result = part_one(input)
                             .or_else([](string error) {
                               println(cout, "\033[1;31m{}\033[0m", error);
-                              return expected<AnswerType, const char *>(0);
+                              return expected<AnswerType, string>(0);
                             })
                             .value();
   println(cout);
@@ -89,7 +89,7 @@ int main() {
   AnswerType part_two_result = part_two(input)
                             .or_else([](string error) {
                               println(cout, "\033[1;31m{}\033[0m", error);
-                              return expected<AnswerType, const char *>(0);
+                              return expected<AnswerType, string>(0);
                             })
                             .value();
   println(cout);
