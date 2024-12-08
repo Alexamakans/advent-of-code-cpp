@@ -106,6 +106,12 @@ found_start_position_p1:
 }
 
 auto part_two(const string &input) -> expected<AnswerType, string> {
+  // We probably need to keep track of the direction that we leaved a tile with.
+  //
+  // If we can place an obstruction to replicate the direction we leaved the tile with we
+  // are likely to get caught in a loop? The obstruction could interfer with the path back though.
+  //
+  // Idk
   AnswerType result = 0;
 
   std::istringstream lines(input);
