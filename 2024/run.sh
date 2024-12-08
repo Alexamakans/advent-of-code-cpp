@@ -115,9 +115,9 @@ if [ -f $SCRIPT_ROOT/bin/$DAY ]; then
   rm $SCRIPT_ROOT/bin/$DAY 2>/dev/null
 fi
 
-g++ -std=c++23 -I $SOURCE_DIR $SOURCE_DIR/${DAY}.cpp -o $SCRIPT_ROOT/bin/$DAY
+g++ -g -std=c++23 -I $SOURCE_DIR $SOURCE_DIR/${DAY}.cpp -o $SCRIPT_ROOT/bin/$DAY
 
 if [ $? -eq 0 ]; then
   clear
-  time $SCRIPT_ROOT/bin/$DAY <$INPUT_DIR/$DAY
+  time gdb -q -ex run -ex "bt" -ex quit --args $SCRIPT_ROOT/bin/$DAY <$INPUT_DIR/$DAY
 fi
