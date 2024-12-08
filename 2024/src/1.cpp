@@ -9,12 +9,6 @@ using std::string;
 using std::unexpected, std::expected;
 
 auto part_one(const string &input) -> expected<int, string> {
-  /*
-   * Pair up the smallest number in the left list with the smallest number in
-   * the right list, second smallest with the second smallest, etc.
-   * Output the sum of the difference of each pair.
-   */
-
   std::vector<int> left, right;
 
   std::istringstream lines(input);
@@ -42,14 +36,6 @@ auto part_one(const string &input) -> expected<int, string> {
 }
 
 auto part_two(const string &input) -> expected<int, string> {
-  /*
-   * This time, you'll need to figure out exactly how often each number from the
-   * left list appears in the right list. Calculate a total similarity score by
-   * adding up each number in the left list after multiplying it by the number
-   * of times that number appears in the right list.
-   *
-   * sum for all i: left(i) * count(right, left(i))
-   */
   std::vector<int> left, right;
 
   std::istringstream lines(input);
