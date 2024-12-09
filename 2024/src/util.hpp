@@ -1,7 +1,7 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 #include <charconv>
-#include <format>
+#include <cstdint>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -23,9 +23,9 @@ constexpr auto to_int(const std::string_view &sv) -> std::optional<int> {
   return std::nullopt;
 }
 
-constexpr auto to_long_long(const std::string_view &sv)
-    -> std::optional<long long> {
-  long long value;
+constexpr auto to_int64(const std::string_view &sv)
+    -> std::optional<int64_t> {
+  int64_t value;
   auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
   if (err == std::errc{}) {
     return value;
@@ -33,9 +33,9 @@ constexpr auto to_long_long(const std::string_view &sv)
   return std::nullopt;
 }
 
-constexpr auto to_unsigned_long_long(const std::string_view &sv)
-    -> std::optional<unsigned long long> {
-  unsigned long long value;
+constexpr auto to_uint64(const std::string_view &sv)
+    -> std::optional<uint64_t> {
+  uint64_t value;
   auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
   if (err == std::errc{}) {
     return value;
@@ -63,7 +63,8 @@ auto split(const std::string &s, const char delimiter,
   return result;
 }
 
-std::string join(const std::vector<int> &vec, std::string delimiter) {
+template <typename T>
+std::string join(const std::vector<T> &vec, std::string delimiter) {
   std::ostringstream s("");
 
   auto it = vec.cbegin();

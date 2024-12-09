@@ -4,6 +4,11 @@ SCRIPT_ROOT=$(pwd)
 INPUT_DIR=$SCRIPT_ROOT/inputs
 SOURCE_DIR=$SCRIPT_ROOT/src
 
+[ -d $INPUT_DIR ] || mkdir $INPUT_DIR
+[ -d $SOURCE_DIR ] || mkdir $SOURCE_DIR
+[ -d $SCRIPT_ROOT/samples ] || mkdir $SCRIPT_ROOT/samples
+[ -d $SCRIPT_ROOT/bin ] || mkdir $SCRIPT_ROOT/bin
+
 if [[ $# -eq 0 ]] || [[ $# -gt 2 ]]; then
   echo "Expected 1 or 2 arguments"
   echo "$0 <DAY>"
