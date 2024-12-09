@@ -1,10 +1,9 @@
-#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <format>
 #include <iostream>
 #include <sstream>
-#include <unordered_map>
+#include <string>
 
 #include "util.hpp"
 
@@ -17,32 +16,6 @@ typedef uint64_t AnswerType;
 struct Equation {
   uint64_t target;
   std::vector<uint64_t> parts;
-
-  uint64_t get_max() const {
-    uint64_t result = parts.at(0);
-    for (int i = 1; i < parts.size(); ++i) {
-      const auto &val = parts.at(i);
-      if (val == 1) {
-        result += val;
-      } else {
-        result *= val;
-      }
-    }
-    return result;
-  }
-
-  uint64_t get_min() const {
-    uint64_t result = parts.at(0);
-    for (int i = 1; i < parts.size(); ++i) {
-      const auto &val = parts.at(i);
-      if (val == 1) {
-        result *= val;
-      } else {
-        result += val;
-      }
-    }
-    return result;
-  }
 };
 
 Equation parse_line(const std::string &line) {
@@ -55,40 +28,87 @@ Equation parse_line(const std::string &line) {
   return out;
 };
 
-struct vector_hash {
-  std::size_t operator()(std::vector<uint64_t> const &vec) const {
-    std::size_t seed = vec.size();
-    for (auto x : vec) {
-      x = ((x >> 16) ^ x) * 0x45d9f3b;
-      x = ((x >> 16) ^ x) * 0x45d9f3b;
-      x = (x >> 16) ^ x;
-      seed ^= x + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+bool bruteforce_part_one(const Equation &e) {
+  // 0 -> addition
+  // 1 -> multiplication
+  // right-most bit (LSB) is the operation applied to the first pairing
+  uint64_t operations = 0;
+  uint64_t limit = 2 << (e.parts.size() - 2);
+  while (operations < limit) {
+    uint64_t result = e.parts.at(0);
+    for (int i = 1; i < e.parts.size(); ++i) {
+      uint64_t operand = e.parts.at(i);
+      int operator_index = ((operations >> (i - 1)) & 1);
+      if (operator_index == 1) {
+        result *= operand;
+      } else if (operator_index == 0) {
+        result += operand;
+      }
     }
-    return seed;
+    if (result == e.target) {
+      return true;
+    }
+    ++operations;
   }
-};
 
-struct SolverState {
-  uint64_t current_value;
-  std::vector<uint64_t> remaining_parts;
-};
+  return false;
+}
 
-struct solver_state_hash {
-  size_t operator()(const SolverState &v) {
-    size_t h = vector_hash{}(v.remaining_parts);
-    auto x = v.current_value;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x);
-    h ^= x + 0x9e3779b9 + (h << 6) + (h >> 2);
-    return h;
+uint64_t get_asdf(uint64_t v) {
+  int asdf = 10;
+  while (true) {
+    if (v % asdf == v) {
+      return asdf;
+    }
+    asdf *= 10;
   }
-};
+}
 
-struct Solver {
-  std::unordered_map<SolverState, std::vector<uint64_t>, solver_state_hash> cache;
-  // stuff
-};
+bool bruteforce_part_two(const Equation &e) {
+  // 0 -> addition
+  // 1 -> multiplication
+  // 2 -> join
+  std::vector<int> operations;
+  for (const auto &p : e.parts) {
+    operations.push_back(0);
+  }
+  bool loop = true;
+  while (loop) {
+    uint64_t result = e.parts.at(0);
+    for (int i = 1; i < e.parts.size(); ++i) {
+      uint64_t operand = e.parts.at(i);
+      int operator_index = operations.at(i - 1);
+      if (operator_index == 2) {
+        auto asdf = get_asdf(operand);
+        result = result * asdf + operand;
+      } else if (operator_index == 1) {
+        result *= operand;
+      } else if (operator_index == 0) {
+        result += operand;
+      }
+    }
+    if (result == e.target) {
+      return true;
+    }
+
+    while (true) {
+      for (auto [i, op] : std::ranges::views::enumerate(operations)) {
+        if (op == 2) {
+          op = 0;
+          if (i == operations.size() - 1) {
+            return false;
+          }
+        } else {
+          ++op;
+          goto nextpls;
+        }
+      }
+    }
+  nextpls:
+  }
+
+  return false;
+}
 
 auto part_one(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
@@ -98,42 +118,29 @@ auto part_one(const string &input) -> expected<AnswerType, string> {
   string line;
   while (std::getline(lines, line)) {
     const auto equation = parse_line(line);
-    const auto min = equation.get_min();
-    if (min > equation.target) {
-      continue;
-    } else if (min == equation.target) {
-      result += equation.target;
-    }
-    const auto max = equation.get_max();
-    if (max < equation.target) {
-      continue;
-    } else if (max == equation.target) {
+    if (bruteforce_part_one(equation)) {
       result += equation.target;
       continue;
     }
-    println(cout, "equation [ {}: {} ] MIGHT be possible ({} <= {} <= {})",
-            equation.target, join(equation.parts, ", "), min, equation.target,
-            max);
   }
 
-  if (false) {
-    return unexpected("false is true?!");
-  }
   return result;
 }
 
 auto part_two(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
+  std::vector<Equation> equations;
 
   std::istringstream lines(input);
   string line;
   while (std::getline(lines, line)) {
-    // Do stuff
+    const auto equation = parse_line(line);
+    if (bruteforce_part_two(equation)) {
+      result += equation.target;
+      continue;
+    }
   }
 
-  if (false) {
-    return unexpected("false is true?!");
-  }
   return result;
 }
 
