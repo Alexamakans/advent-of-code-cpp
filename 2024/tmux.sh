@@ -26,6 +26,12 @@ if [[ $? != 0 ]]; then
     tmux send-keys -t "$SESSION_NAME:0.1" "$CMD_WATCH" C-m
   fi
 
+  if hash w3m 2>&1 > /dev/null; then
+    tmux new-window -t "$SESSION_NAME" "w3m https://adventofcode.com/2024/day/$DAY"
+  else
+    echo "Install w3m to also launch the challenge page in tmux"
+  fi
+
   tmux select-pane -t "$SESSION_NAME:0.0"
   tmux send-keys -t "$SESSION_NAME:0.0" "$CMD_NVIM" C-m
   tmux resize-pane -t "$SESSION_NAME:0.0" -R 20
