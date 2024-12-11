@@ -33,10 +33,14 @@ fi
 
 function make_file() {
   cat <<EOF
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
 #include <expected>
+#include <format>
 #include <iostream>
 #include <sstream>
-#include <format>
+#include <string>
 
 #include "util.hpp"
 
@@ -44,35 +48,67 @@ using std::cout, std::println;
 using std::string;
 using std::unexpected, std::expected;
 
-typedef int AnswerType;
+typedef uint64_t AnswerType;
 
-auto part_one(const string &input) -> expected<AnswerType, string> {
-  AnswerType result = 0;
+typedef std::vector<string> Batch;
+typedef AnswerType BatchResult;
+typedef AnswerType FinalResult;
 
-  std::istringstream lines(input);
-  string line;
-  while (std::getline(lines, line)) {
-    // Do stuff
+struct Provider {
+  int batch_size;
+  std::istringstream lines;
+  std::string line_buffer;
+  Batch batch_buffer;
+
+  void prepare(const std::string &input) { lines = std::istringstream(input); }
+
+  Batch provide() {
+    for (int i = 0; i < batch_size && std::getline(lines, line_buffer); ++i) {
+      batch_buffer.push_back(line_buffer);
+    }
+
+    return std::move(batch_buffer);
   }
+  bool done() const { return lines.eof(); }
+};
 
-  if (false) {
-    return unexpected("false is true?!");
+struct Consumer {
+  BatchResult consume(Batch input) const {
+    BatchResult result = 0;
+    for (const auto &element : input) {
+      // do stuff
+    }
+    return result;
   }
+};
+
+struct Solver {
+  Provider provider;
+  Consumer consumer;
+
+  FinalResult combine(FinalResult accumulator, BatchResult value) const {
+    return accumulator + value;
+  }
+};
+
+auto make_solver(int batch_size)
+    -> Multithreader<Batch, BatchResult, FinalResult> auto {
+  auto out = Solver{};
+  out.provider.batch_size = batch_size;
+  return out;
+}
+
+auto part_one(const std::string &input) -> expected<AnswerType, string> {
+  auto solver_instance = make_solver(100);
+  AnswerType result =
+      execute<Batch, BatchResult, AnswerType>(input, solver_instance, 0);
   return result;
 }
 
 auto part_two(const string &input) -> expected<AnswerType, string> {
-  AnswerType result = 0;
-
-  std::istringstream lines(input);
-  string line;
-  while (std::getline(lines, line)) {
-    // Do stuff
-  }
-
-  if (false) {
-    return unexpected("false is true?!");
-  }
+  auto solver_instance = make_solver(100);
+  AnswerType result =
+      execute<Batch, BatchResult, AnswerType>(input, solver_instance, 0);
   return result;
 }
 
@@ -82,27 +118,29 @@ int main() {
   string input = buffer.str();
 
   println(cout, " --- PART 1 LOGS ---");
-  AnswerType part_one_result = part_one(input)
-                            .or_else([](string error) {
-                              println(cout, "\033[1;31m{}\033[0m", error);
-                              return expected<AnswerType, string>(0);
-                            })
-                            .value();
+  AnswerType part_one_result =
+      part_one(input)
+          .or_else([](string error) {
+            println(cout, "\033[1;31m{}\033[0m", error);
+            return expected<AnswerType, string>(0);
+          })
+          .value();
   println(cout);
   println(cout);
 
   println(cout, " --- PART 2 LOGS ---");
-  AnswerType part_two_result = part_two(input)
-                            .or_else([](string error) {
-                              println(cout, "\033[1;31m{}\033[0m", error);
-                              return expected<AnswerType, string>(0);
-                            })
-                            .value();
+  AnswerType part_two_result =
+      part_two(input)
+          .or_else([](string error) {
+            println(cout, "\033[1;31m{}\033[0m", error);
+            return expected<AnswerType, string>(0);
+          })
+          .value();
   println(cout);
   println(cout);
 
   println(cout, "-----------------------------------------");
-  println(cout, "Day 1");
+  println(cout, "Day $DAY");
   println(cout, "\tPart 1");
   println(cout, "\t\tAnswer: {}", part_one_result);
   println(cout, "\tPart 2");

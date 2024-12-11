@@ -3,7 +3,10 @@
 #include <charconv>
 #include <cmath>
 #include <cstdint>
+#include <future>
+#include <iostream>
 #include <optional>
+#include <ostream>
 #include <ranges>
 #include <sstream>
 #include <string_view>
@@ -81,4 +84,48 @@ inline uint64_t concatenate(uint64_t x, uint64_t y) {
     pow10 *= 10;
   return x * pow10 + y;
 }
+
+template <typename T, typename Batch>
+concept InputProvider = requires(T t, Batch b, const std::string &input) {
+  { t.prepare(input) };
+  { t.provide() } -> std::same_as<Batch>;
+  { t.done() } -> std::same_as<bool>;
+};
+
+template <typename T, typename Batch, typename BatchResult>
+concept InputConsumer = requires(T t, Batch input, BatchResult output) {
+  { t.consume(input) } -> std::same_as<BatchResult>;
+};
+
+template <typename T, typename Batch, typename BatchResult,
+          typename FinalResult>
+concept Multithreader =
+    requires(T t, BatchResult batchResult, FinalResult finalResult) {
+      { t.provider } -> InputProvider<Batch>;
+      { t.consumer } -> InputConsumer<Batch, BatchResult>;
+      { t.combine(finalResult, batchResult) } -> std::same_as<FinalResult>;
+    };
+
+template <typename Batch, typename BatchResult, typename FinalResult>
+FinalResult execute(const std::string &input,
+                    Multithreader<Batch, BatchResult, FinalResult> auto &m,
+                    FinalResult starting_value) {
+  m.provider.prepare(input);
+  std::vector<std::future<BatchResult>> futures;
+  while (!m.provider.done()) {
+    Batch batch = m.provider.provide();
+    futures.push_back(std::async(
+        std::launch::async,
+        [&](Batch batch) { return m.consumer.consume(batch); }, batch));
+  }
+
+  FinalResult result = starting_value;
+  for (auto &future : futures) {
+    BatchResult batch_result = future.get();
+    result = m.combine(result, batch_result);
+  }
+
+  return result;
+}
+
 #endif // UTIL_HPP
