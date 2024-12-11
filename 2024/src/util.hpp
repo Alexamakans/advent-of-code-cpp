@@ -1,6 +1,7 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <ranges>
@@ -23,8 +24,7 @@ constexpr auto to_int(const std::string_view &sv) -> std::optional<int> {
   return std::nullopt;
 }
 
-constexpr auto to_int64(const std::string_view &sv)
-    -> std::optional<int64_t> {
+constexpr auto to_int64(const std::string_view &sv) -> std::optional<int64_t> {
   int64_t value;
   auto [ptr, err] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
   if (err == std::errc{}) {
@@ -74,4 +74,41 @@ std::string join(const std::vector<T> &vec, std::string delimiter) {
   print(s, "{}", *it);
   return s.str();
 }
+
+inline uint64_t concatenate(uint64_t x, uint64_t y) {
+  uint64_t pow10 = 1;
+  while (pow10 <= y)
+    pow10 *= 10;
+  return x * pow10 + y;
+}
+
+struct RangeIterator {
+  uint64_t current;
+  uint64_t end;
+
+  RangeIterator(uint64_t start, uint64_t end) : current(start), end(end) {}
+
+  // Prefix increment
+  RangeIterator &operator++() {
+    ++current;
+    return *this;
+  }
+
+  // Equality comparison
+  bool operator!=(const RangeIterator &other) const {
+    return current != other.current;
+  }
+
+  // Dereference
+  uint64_t operator*() const { return current; }
+};
+
+struct Range {
+  uint64_t _start;
+  uint64_t _end;
+
+  RangeIterator cbegin() const { return RangeIterator(_start, _end); }
+  RangeIterator cend() const { return RangeIterator(_end, _end); }
+};
+
 #endif // UTIL_HPP
