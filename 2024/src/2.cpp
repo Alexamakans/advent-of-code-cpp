@@ -101,7 +101,7 @@ int main() {
   println(cout);
 
   println(cout, "-----------------------------------------");
-  println(cout, "Day 1");
+  println(cout, "Day 2");
   println(cout, "\tPart 1");
   println(cout, "\t\tAnswer: {}", part_one_result);
   println(cout, "\tPart 2");
