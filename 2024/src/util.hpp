@@ -81,34 +81,4 @@ inline uint64_t concatenate(uint64_t x, uint64_t y) {
     pow10 *= 10;
   return x * pow10 + y;
 }
-
-struct RangeIterator {
-  uint64_t current;
-  uint64_t end;
-
-  RangeIterator(uint64_t start, uint64_t end) : current(start), end(end) {}
-
-  // Prefix increment
-  RangeIterator &operator++() {
-    ++current;
-    return *this;
-  }
-
-  // Equality comparison
-  bool operator!=(const RangeIterator &other) const {
-    return current != other.current;
-  }
-
-  // Dereference
-  uint64_t operator*() const { return current; }
-};
-
-struct Range {
-  uint64_t _start;
-  uint64_t _end;
-
-  RangeIterator cbegin() const { return RangeIterator(_start, _end); }
-  RangeIterator cend() const { return RangeIterator(_end, _end); }
-};
-
 #endif // UTIL_HPP

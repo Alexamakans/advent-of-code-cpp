@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <expected>
 #include <format>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -63,76 +64,31 @@ Equation parse_line(const std::string &line) {
   return out;
 };
 
-bool bruteforce_part_one(const Equation &e) {
-  // 0 -> addition
-  // 1 -> multiplication
-  // right-most bit (LSB) is the operation applied to the first pairing
-  uint64_t operations = 0;
-  uint64_t limit = 1ull << (e.parts.size() - 1);
-  while (operations < limit) {
-    uint64_t result = e.parts.at(0);
-    for (int i = 1; i < e.parts.size(); ++i) {
-      uint64_t operand = e.parts.at(i);
-      if (operations & (1 << (i - 1))) {
-        result *= operand;
-      } else {
-        result += operand;
-      }
-    }
-    if (result == e.target) {
-      return true;
-    }
-    ++operations;
-  }
+bool can_reach(const std::vector<char>& operators, const Equation& e) {
+  const int n = e.parts.size();
 
-  return false;
-}
-
-bool bruteforce_part_two(const Equation &e) {
-  // 0 -> addition
-  // 1 -> multiplication
-  // 2 -> join
-  std::vector<int> operations;
-  operations.assign(e.parts.size(), 0);
-  bool loop = true;
-  while (loop) {
-    uint64_t result = e.parts.at(0);
-    for (int i = 1; i < e.parts.size(); ++i) {
-      uint64_t operand = e.parts[i];
-      switch (operations[i - 1]) {
-      case 2: {
-        result = concatenate(result, operand);
-        break;
-      }
-      case 1: {
-        result *= operand;
-        break;
-      }
-      case 0: {
-        result += operand;
-        break;
-      }
-      }
-    }
-    if (result == e.target) {
-      return true;
+  std::function<bool(AnswerType, AnswerType)> backtrack = [&](int index, AnswerType val) -> bool {
+    if (index == n) {
+      return val == e.target;
     }
 
-    size_t idx = 0;
-    while (idx < operations.size()) {
-      if (++operations[idx] > 2) {
-        operations[idx] = 0;
-        ++idx;
-      } else {
-        break;
+    for (char op : operators) {
+      AnswerType nextValue = val;
+      switch(op) {
+        case '+': nextValue += e.parts[index]; break;
+        case '*': nextValue *= e.parts[index]; break;
+        case '|': nextValue = concatenate(nextValue, e.parts[index]); break;
+      }
+
+      if (backtrack(index + 1, nextValue)) {
+        return true;
       }
     }
-    if (idx == operations.size()) {
-      break;
-    }
-  }
 
-  return false;
+    return false;
+  };
+
+  return backtrack(1, e.parts[0]);
 }
 
 #ifdef MULTITHREAD
@@ -140,7 +96,8 @@ bool bruteforce_part_two(const Equation &e) {
 
 AnswerType process_line_part_one(const std::string &line) {
   const auto equation = parse_line(line);
-  if (bruteforce_part_one(equation)) {
+  const std::vector<char> operators = {'+', '*'};
+  if (can_reach(operators, equation)) {
     return equation.target;
   }
   return 0;
@@ -156,11 +113,12 @@ AnswerType process_batch_part_one(std::vector<std::string> batch) {
 
 AnswerType process_line_part_two(const std::string &line) {
   const auto equation = parse_line(line);
-  const auto [min, max] = get_bounds_part_two(equation);
-  if (equation.target < min || equation.target > max) {
-    return 0;
-  }
-  if (bruteforce_part_two(equation)) {
+  //const auto [min, max] = get_bounds_part_two(equation);
+  //if (equation.target < min || equation.target > max) {
+  //  return 0;
+  //}
+  const std::vector<char> operators = {'+', '*', '|'};
+  if (can_reach(operators, equation)) {
     return equation.target;
   }
   return 0;
@@ -178,7 +136,7 @@ auto part_one(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
   std::vector<Equation> equations;
   int total_lines = 850;
-  int lines_per_batch = 110;
+  int lines_per_batch = 425;
   std::vector<std::vector<string>> batches;
   batches.reserve((total_lines / lines_per_batch) + 1);
   std::vector<string> current_batch;
@@ -215,7 +173,7 @@ auto part_two(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
   std::vector<Equation> equations;
   int total_lines = 850;
-  int lines_per_batch = 110;
+  int lines_per_batch = 425;
   std::vector<std::vector<string>> batches;
   batches.reserve((total_lines / lines_per_batch) + 1);
   std::vector<string> current_batch;
@@ -254,9 +212,10 @@ auto part_one(const string &input) -> expected<AnswerType, string> {
 
   std::istringstream lines(input);
   string line;
+  const std::vector<char> operators = {'+', '*'};
   while (std::getline(lines, line)) {
     const auto equation = parse_line(line);
-    if (bruteforce_part_one(equation)) {
+    if (can_reach(operators, equation)) {
       result += equation.target;
       continue;
     }
@@ -271,9 +230,10 @@ auto part_two(const string &input) -> expected<AnswerType, string> {
 
   std::istringstream lines(input);
   string line;
+  const std::vector<char> operators = {'+', '*', '|'};
   while (std::getline(lines, line)) {
     const auto equation = parse_line(line);
-    if (bruteforce_part_two(equation)) {
+    if (can_reach(operators, equation)) {
       result += equation.target;
       continue;
     }
