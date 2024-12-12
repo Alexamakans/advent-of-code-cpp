@@ -188,15 +188,15 @@ struct Provider {
 
 struct Consumer {
   std::tuple<int, int, int> starting_point;
-  std::vector<std::vector<char>> grid;
+  std::vector<std::vector<char>> *grid;
   BatchResult consume(Batch input) const {
     BatchResult result = 0;
     for (const auto &p : input) {
-      auto &c = grid.at(p.y).at(p.x);
+      auto &c = grid->at(p.y).at(p.x);
       if (c == '^' || c == '>' || c == 'v' || c == '<') {
         continue;
       }
-      const auto &[_, loop] = walk(grid, p, starting_point);
+      const auto &[_, loop] = walk(*grid, p, starting_point);
       if (loop) {
         ++result;
       }
@@ -222,18 +222,17 @@ auto make_solver(int batch_size)
   return out;
 }
 
+auto solver = make_solver(0);
 auto part_one(const string &input) -> expected<AnswerType, string> {
-  auto solver = make_solver(0);
   solver.provider.prepare(input);
-  return solver.provider.unique_points.size();
+  auto num_unique_points = solver.provider.unique_points.size();
+  solver.provider.batch_size = num_unique_points / 2 + 1;
+  return num_unique_points;
 }
 
 auto part_two(const string &input) -> expected<AnswerType, string> {
-  auto solver = make_solver(1000);
-  solver.provider.prepare(input);
-  solver.consumer.grid = solver.provider.grid;
+  solver.consumer.grid = &solver.provider.grid;
   solver.consumer.starting_point = solver.provider.starting_point;
-
   return execute<Batch, BatchResult>(input, solver, 0);
 }
 
