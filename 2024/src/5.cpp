@@ -4,6 +4,7 @@
 #include <iostream>
 #include <optional>
 #include <sstream>
+#include <unordered_map>
 
 #include "util.hpp"
 
@@ -39,34 +40,38 @@ template <> struct std::formatter<Rule> {
   }
 };
 
-std::vector<Rule> parse_rules(std::istringstream &lines) {
+std::tuple<std::vector<Rule>, std::unordered_map<int, Rule>>
+parse_rules(std::istringstream &lines) {
   std::vector<Rule> rules;
+  std::unordered_map<int, Rule> mappings;
   string line;
   while (std::getline(lines, line)) {
     if (line.empty()) {
-      return rules;
+      return std::make_tuple(rules, mappings);
     }
     auto parts = split(line, '|', parse::to_int);
-    rules.push_back(Rule(parts.at(0), parts.at(1)));
+    auto left = parts.at(0);
+    auto right = parts.at(1);
+    auto rule = Rule(left, right);
+    rules.push_back(rule);
+    mappings.insert_or_assign(concatenate(left, right), rule);
   }
-  return rules;
+  return std::make_tuple(rules, mappings);
 }
 
 auto part_one(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
 
   std::istringstream lines(input);
-  auto rules = parse_rules(lines);
+  auto [rules, rulemap] = parse_rules(lines);
   string line;
+  std::vector<int> updates;
   while (std::getline(lines, line)) {
-    std::vector<int> updates = split(line, ',', parse::to_int);
-    for (const auto &rule : rules) {
-      if (!rule.allows(updates)) {
-        goto nextline_p1;
-      }
+    updates = split(line, ',', parse::to_int);
+    if (std::all_of(rules.cbegin(), rules.cend(),
+                    [&](const auto &rule) { return rule.allows(updates); })) {
+      result += updates.at(updates.size() / 2);
     }
-    result += updates.at(updates.size() / 2);
-  nextline_p1:
   }
 
   return result;
@@ -76,48 +81,26 @@ auto part_two(const string &input) -> expected<AnswerType, string> {
   AnswerType result = 0;
 
   std::istringstream lines(input);
-  auto rules = parse_rules(lines);
+  auto [rules, rulemap] = parse_rules(lines);
   string line;
+  std::vector<int> updates;
   while (std::getline(lines, line)) {
-    std::vector<int> updates = split(line, ',', parse::to_int);
-    bool is_sorted = true;
-    for (const auto &rule : rules) {
-      if (!rule.allows(updates)) {
-        is_sorted = false;
-        break;
-      }
-    }
+    updates = split(line, ',', parse::to_int);
+    bool is_sorted = std::all_of(rules.cbegin(), rules.cend(), [&](auto &rule) {
+      return rule.allows(updates);
+    });
     if (is_sorted) {
       continue;
     }
 
-    auto get_rule = [&rules](int a, int b) -> std::optional<Rule> {
-      for (const auto &rule : rules) {
-        if ((rule.left == a && rule.right == b) ||
-            (rule.left == b && rule.right == a)) {
-          return rule;
-        }
-      }
-      return std::nullopt;
-    };
-
-    while (true) {
-      bool swapped = false;
-      for (auto a = updates.begin(); a != updates.end() - 1; ++a) {
-        for (auto b = a + 1; b != updates.end(); ++b) {
-          const auto &rule = get_rule(*a, *b);
-          if (rule.has_value()) {
-            if (rule.value().right == *a) {
-              swapped = true;
-              std::iter_swap(a, b);
-            }
-          }
-        }
-      }
-      if (!swapped) {
-        break;
-      }
-    }
+    std::sort(updates.begin(), updates.end(),
+              [&](const auto &a, const auto &b) {
+                auto key = concatenate(b, a);
+                if (!rulemap.contains(key)) {
+                  return 0;
+                }
+                return 1;
+              });
 
     int middle_value = updates.at(updates.size() / 2);
     result += middle_value;
