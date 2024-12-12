@@ -17,12 +17,6 @@ constexpr int DOWN = 1;
 constexpr int LEFT = 2;
 constexpr int UP = 3;
 
-struct Point {
-  int x, y;
-
-  bool operator==(const Point &rhs) const { return x == rhs.x && y == rhs.y; }
-};
-
 struct Step {
   int direction;
   Point from;
@@ -32,15 +26,9 @@ struct Step {
   }
 };
 
-struct point_hash {
-  std::size_t operator()(const Point &v) const {
-    return v.x * 10 + v.y * 1000000;
-  }
-};
-
 struct step_hash {
   std::size_t operator()(const Step &v) const {
-    return v.direction + point_hash{}(v.from);
+    return std::hash<int>{}(v.direction) ^ std::hash<Point>{}(v.from);
   }
 };
 
@@ -160,7 +148,7 @@ struct Provider {
     }
 
     const auto &[steps, loop] = walk(grid);
-    std::unordered_set<Point, point_hash> unique_points_set;
+    std::unordered_set<Point> unique_points_set;
     for (const auto &step : steps) {
       const auto &[it, inserted] = unique_points_set.insert(step.from);
       if (inserted) {

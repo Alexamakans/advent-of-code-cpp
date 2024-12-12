@@ -142,4 +142,39 @@ inline auto get_timer_microseconds() {
       .count();
 }
 
+struct Point {
+  int x, y;
+
+  Point() = default;
+  Point(int x, int y) : x(x), y(y) {}
+
+  bool operator==(const Point &rhs) const { return x == rhs.x && y == rhs.y; }
+};
+
+namespace std {
+template <> struct hash<Point> {
+  inline size_t operator()(const Point &v) const {
+    hash<int> int_hasher;
+    return int_hasher(v.x) ^ int_hasher(v.y);
+  }
+};
+}; // namespace std
+
+struct Line {
+  Point a, b;
+
+  Line() = default;
+  Line(Point a, Point b) : a(a), b(b) {}
+
+  bool operator==(const Line &rhs) const { return a == rhs.a && b == rhs.b; }
+};
+
+namespace std {
+template <> struct hash<Line> {
+  inline size_t operator()(const Line &v) const {
+    hash<Point> point_hasher;
+    return point_hasher(v.a) ^ point_hasher(v.b);
+  }
+};
+}; // namespace std
 #endif // UTIL_HPP
