@@ -1,6 +1,8 @@
+#pragma once
 #ifndef UTIL_HPP
 #define UTIL_HPP
 #include <charconv>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <future>
@@ -126,6 +128,18 @@ FinalResult execute(const std::string &input,
   }
 
   return result;
+}
+
+auto time_start = std::chrono::high_resolution_clock::now();
+
+inline void reset_timer() {
+  time_start = std::chrono::high_resolution_clock::now();
+}
+
+inline auto get_timer_microseconds() {
+  return std::chrono::duration_cast<std::chrono::microseconds>(
+             std::chrono::high_resolution_clock::now() - time_start)
+      .count();
 }
 
 #endif // UTIL_HPP
