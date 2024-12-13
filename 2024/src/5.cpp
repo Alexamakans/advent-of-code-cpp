@@ -115,6 +115,7 @@ int main() {
   string input = buffer.str();
 
   println(cout, " --- PART 1 LOGS ---");
+  reset_timer();
   AnswerType part_one_result =
       part_one(input)
           .or_else([](string error) {
@@ -122,10 +123,12 @@ int main() {
             return expected<AnswerType, string>(0);
           })
           .value();
+  auto part_one_took_microseconds = get_timer_microseconds();
   println(cout);
   println(cout);
 
   println(cout, " --- PART 2 LOGS ---");
+  reset_timer();
   AnswerType part_two_result =
       part_two(input)
           .or_else([](string error) {
@@ -133,6 +136,7 @@ int main() {
             return expected<AnswerType, string>(0);
           })
           .value();
+  auto part_two_took_microseconds = get_timer_microseconds();
   println(cout);
   println(cout);
 
@@ -140,8 +144,15 @@ int main() {
   println(cout, "Day 5");
   println(cout, "\tPart 1");
   println(cout, "\t\tAnswer: {}", part_one_result);
+  println(cout, "\t\tTook {} us ({} ms) ({} s)", part_one_took_microseconds,
+          float(part_one_took_microseconds) / 1000.0,
+          float(part_one_took_microseconds) / 1000000.0);
   println(cout, "\tPart 2");
   println(cout, "\t\tAnswer: {}", part_two_result);
+  println(cout, "\t\tTook {} us ({} ms) ({} s)", part_two_took_microseconds,
+          float(part_two_took_microseconds) / 1000.0,
+          float(part_two_took_microseconds) / 1000000.0);
   println(cout, "-----------------------------------------");
   return 0;
 }
+
