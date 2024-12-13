@@ -131,8 +131,8 @@ std::tuple<std::vector<Block *>, long> get_file(Disk &disk, int file_id) {
   });
   auto start_index = std::distance(disk.begin(), first);
   auto last = std::find_if_not(first, disk.end(), [=](const Block &block) {
-                return !block.free && block.file_id == file_id;
-              });
+    return !block.free && block.file_id == file_id;
+  });
 
   std::vector<Block *> result;
   for (auto it = first; it != last; ++it) {
@@ -147,8 +147,8 @@ get_first_contiguous_block_of_size(Disk &disk, long end_index, size_t size) {
   const auto end = start + end_index;
   while (start < end) {
     std::vector<Block *> result;
-    auto it = std::find_if(start, end,
-                           [](const Block &block) { return block.free; });
+    auto it =
+        std::find_if(start, end, [](const Block &block) { return block.free; });
     if (it >= end) {
       return {};
     }
@@ -168,21 +168,53 @@ get_first_contiguous_block_of_size(Disk &disk, long end_index, size_t size) {
 }
 
 void block_pack(Disk &disk) {
+  std::vector<std::pair<int, int>> free_spans;
+  auto start = disk.begin();
+  const auto end = disk.end();
+  while (start < end) {
+    start =
+        std::find_if(start, end, [](const Block &block) { return block.free; });
+    if (start == end) {
+      break;
+    }
+
+    int start_index = start - disk.begin();
+    int end_index = start_index;
+    while (disk[end_index].free && end_index < disk.size()) {
+      ++end_index;
+    }
+
+    free_spans.emplace_back(start_index, end_index - start_index);
+    start += end_index - start_index;
+  }
+
   auto last_non_empty = get_last_non_empty_block(disk);
   auto highest_file_id = last_non_empty->file_id;
   auto current_file_id = highest_file_id;
   do {
     auto [file, file_start_index] = get_file(disk, current_file_id);
-    auto [free_blocks, free_blocks_start_index] =
-        get_first_contiguous_block_of_size(disk, file_start_index, file.size());
-    if (free_blocks.size() >= file.size()) {
-      int i = 0;
-      for (auto &file_block : file) {
-        file_block->free = true;
-        free_blocks[i]->file_id = current_file_id;
-        free_blocks[i]->free = false;
-        ++i;
+    auto file_size = file.size();
+
+    auto free_it =
+        std::find_if(free_spans.begin(), free_spans.end(),
+                     [=](const std::pair<int, int> &span) {
+                       return span.first + span.second <= file_start_index &&
+                              span.second >= file_size;
+                     });
+
+    if (free_it != free_spans.cend()) {
+      auto free_start_index = free_it->first;
+      std::copy(disk.begin() + file_start_index,
+                disk.begin() + file_start_index + file_size,
+                disk.begin() + free_start_index);
+      std::fill(disk.begin() + file_start_index,
+                disk.begin() + file_start_index + file_size, Block{0, true});
+      free_it->first += file_size;
+      free_it->second -= file_size;
+      if (free_it->second == 0) {
+        free_spans.erase(free_it);
       }
+      free_spans.push_back(std::make_pair(file_start_index, file_size));
     }
   } while (--current_file_id >= 0);
 }
