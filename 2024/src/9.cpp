@@ -130,9 +130,9 @@ std::tuple<std::vector<Block *>, long> get_file(Disk &disk, int file_id) {
     return !block.free && block.file_id == file_id;
   });
   auto start_index = std::distance(disk.begin(), first);
-  auto last = std::find_if(disk.rbegin(), disk.rend(), [=](const Block &block) {
+  auto last = std::find_if_not(first, disk.end(), [=](const Block &block) {
                 return !block.free && block.file_id == file_id;
-              }).base();
+              });
 
   std::vector<Block *> result;
   for (auto it = first; it != last; ++it) {
