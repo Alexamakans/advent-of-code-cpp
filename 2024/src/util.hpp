@@ -80,9 +80,29 @@ std::string join(const std::vector<T> &vec, std::string delimiter) {
 
 inline uint64_t concatenate(uint64_t x, uint64_t y) {
   uint64_t pow10 = 1;
-  while (pow10 <= y)
+  while (pow10 <= y) {
     pow10 *= 10;
+  }
   return x * pow10 + y;
+}
+
+template <typename T> inline int get_num_digits(T x) {
+  uint64_t pow10 = 10;
+  int num_digits = 1;
+  while (pow10 <= x) {
+    pow10 *= 10;
+    ++num_digits;
+  }
+  return num_digits;
+}
+
+// index determines the last digit in the left number, starting at 0 for the
+// right-most digit in x.
+template <typename T> inline std::pair<T, T> split_number(T x, int index) {
+  int v = pow(10, index);
+  auto left = x / v;
+  auto right = x % v;
+  return std::make_pair(left, right);
 }
 
 template <typename T, typename Batch>
@@ -176,6 +196,28 @@ template <> struct hash<Line> {
 };
 }; // namespace std
 
+namespace std {
+template <> struct hash<std::pair<uint64_t, uint64_t>> {
+  inline size_t operator()(const std::pair<uint64_t, uint64_t> &v) const {
+    hash<uint64_t> hasher;
+    return hasher(v.first) ^ hasher(v.second);
+  }
+};
+}; // namespace std
+
+namespace std {
+template <> struct hash<std::vector<int>> {
+  inline size_t operator()(const std::vector<int> &v) const {
+    hash<int> int_hasher{};
+    size_t h = int_hasher(v.size());
+    for (const auto &e : v) {
+      h ^= int_hasher(e);
+    }
+    return h;
+  }
+};
+}; // namespace std
+
 struct CharGrid {
   std::vector<char> vec;
   size_t width, height;
@@ -188,20 +230,14 @@ struct CharGrid {
         vec.push_back(c);
       }
     }
-    height = vec.size()/width;
+    height = vec.size() / width;
   }
 
-  inline size_t index(size_t x, size_t y) const {
-    return x + y * width;
-  }
+  inline size_t index(size_t x, size_t y) const { return x + y * width; }
 
-  char &at(size_t x, size_t y) {
-    return vec.at(index(x, y));
-  }
+  char &at(size_t x, size_t y) { return vec.at(index(x, y)); }
 
-  const char &at(size_t x, size_t y) const {
-    return vec.at(index(x, y));
-  }
+  const char &at(size_t x, size_t y) const { return vec.at(index(x, y)); }
 
   bool contains(size_t x, size_t y) const {
     return x >= 0 && x < width && y >= 0 && y < height;
