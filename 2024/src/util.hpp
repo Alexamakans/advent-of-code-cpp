@@ -6,9 +6,7 @@
 #include <cmath>
 #include <cstdint>
 #include <future>
-#include <iostream>
 #include <optional>
-#include <ostream>
 #include <ranges>
 #include <sstream>
 #include <string_view>
@@ -177,4 +175,36 @@ template <> struct hash<Line> {
   }
 };
 }; // namespace std
+
+struct CharGrid {
+  std::vector<char> vec;
+  size_t width, height;
+  CharGrid(const std::string &input) {
+    std::istringstream lines(input);
+    std::string line;
+    while (getline(lines, line)) {
+      width = line.size();
+      for (const char c : line) {
+        vec.push_back(c);
+      }
+    }
+    height = vec.size()/width;
+  }
+
+  inline size_t index(size_t x, size_t y) const {
+    return x + y * width;
+  }
+
+  char &at(size_t x, size_t y) {
+    return vec.at(index(x, y));
+  }
+
+  const char &at(size_t x, size_t y) const {
+    return vec.at(index(x, y));
+  }
+
+  bool contains(size_t x, size_t y) const {
+    return x >= 0 && x < width && y >= 0 && y < height;
+  }
+};
 #endif // UTIL_HPP
